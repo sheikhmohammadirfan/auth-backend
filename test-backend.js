@@ -22,7 +22,7 @@ mongoose.connect(process.env.MONGO_URL)
     
     // Test 3: User Model
     console.log("3️⃣ Testing User Model...");
-    const User = require("./models/User");
+    const User = require("./models/user");
     console.log("   ✅ User model loaded successfully!\n");
     
     console.log("🎉 All tests passed! Your backend should work.\n");
