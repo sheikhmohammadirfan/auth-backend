@@ -1,4 +1,4 @@
-const User = require("../models/user");
+const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -150,4 +150,58 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, getAllUsers, getCurrentUser };
+const deleteAllUsers = async (req, res) => {
+  try {
+    console.log("🗑️  Deleting all users (requested by superadmin:", req.user.email + ")");
+    
+    // Keep the requesting superadmin, delete everyone else
+    const result = await User.deleteMany({ 
+      _id: { $ne: req.user.id } // Don't delete yourself!
+    });
+    
+    console.log("✅ Deleted", result.deletedCount, "users");
+    
+    res.status(200).json({ 
+      message: `Successfully deleted ${result.deletedCount} users`,
+      deletedCount: result.deletedCount
+    });
+  } catch (err) {
+    console.error("❌ Delete all users error:", err);
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: err.message 
+    });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("🗑️  Deleting user:", userId);
+    
+    // Don't allow deleting yourself
+    if (userId === req.user.id) {
+      return res.status(400).json({ message: "Cannot delete your own account" });
+    }
+    
+    const user = await User.findByIdAndDelete(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    console.log("✅ User deleted:", user.email);
+    res.status(200).json({ 
+      message: "User deleted successfully",
+      deletedUser: { email: user.email, role: user.role }
+    });
+  } catch (err) {
+    console.error("❌ Delete user error:", err);
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: err.message 
+    });
+  }
+};
+
+module.exports = { signup, login, getAllUsers, getCurrentUser, deleteAllUsers, deleteUser };
